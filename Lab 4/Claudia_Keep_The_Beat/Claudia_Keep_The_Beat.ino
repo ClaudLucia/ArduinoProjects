@@ -1,0 +1,156 @@
+#include <Servo.h>
+
+Servo myServo;
+
+//Holds the time the LED was last changed
+const int switchPin = 9;
+unsigned long previousTime = 0;
+
+//switch state and the previous switch state
+//used to compare switch's position from one loop to the next
+int switchState = 0;
+int prevSwitchState=0;
+
+//initial led
+int led = 4;
+
+//interval between each event
+long interval = 2000;
+
+//Values for notes
+//const int a = 440;
+//const int b = 466;
+//const int c = 261;
+//const int d = 294;
+//const int e = 329;
+//const int f = 349;
+//const int g = 391;
+
+int speakerPin = 8;
+
+
+int length = 28; // the number of notes
+
+//twinkle twinkle little star
+//char notes[] = {c,c,g,g,a,a,g, f,f,e,e,d,d,c}; // a space represents a rest
+
+//Happy Birthday
+char notes[] = "GGAGcB GGAGdc GGxecBA yyecdc";
+int beats[] = { 2, 2, 8, 8, 8, 16, 1, 2, 2, 8, 8,8, 16, 1, 2,2,8,8,8,8,16, 1,2,2,8,8,8,16 };
+int tempo = 150;
+
+void playTone(int tone, int duration) {
+
+  for (long i = 0; i < duration * 1000L; i += tone * 2) {
+  
+     digitalWrite(speakerPin, HIGH);
+  
+     delayMicroseconds(tone);
+  
+     digitalWrite(speakerPin, LOW);
+  
+     delayMicroseconds(tone);
+  }
+}
+
+void playNote(char note, int duration) {
+
+char names[] = {'C', 'D', 'E', 'F', 'G', 'A', 'B',           
+
+                 'c', 'd', 'e', 'f', 'g', 'a', 'b',
+
+                 'x', 'y' };
+
+int tones[] = { 1915, 1700, 1519, 1432, 1275, 1136, 1014,
+
+                 956,  834,  765,  593,  468,  346,  224,
+
+                 655 , 715 };
+
+int SPEE = 5;
+
+// play the tone corresponding to the note name
+
+for (int i = 0; i < 17; i++) {
+
+   if (names[i] == note) {
+    int newduration = duration/SPEE;
+     playTone(tones[i], newduration);
+   }
+}
+}
+
+
+void setup() {
+  // put your setup code here, to run once:
+  
+  //Assigning the LED pin values
+  //set the direction of the digital pins
+  for(int x = 4; x<8; x++){
+    pinMode(x, OUTPUT);
+  }
+  pinMode(switchPin, INPUT);
+
+  pinMode(speakerPin, OUTPUT);
+  
+  myServo.attach(10);
+
+  myServo.write(0);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  //check the time since the program started running
+  unsigned long currentTime = millis();
+    
+  //checks to see if enough time has passed to turn on an LED
+  if (currentTime - previousTime > interval){
+    previousTime = currentTime;
+    
+    //turns on LED and incremments the LED variable
+    digitalWrite(led, HIGH);
+    led++;
+      
+    //if no movement is detected then the arduino will play a song
+    if(led == 7){
+        for (int i = 0; i < length; i++) {
+       if (notes[i] == ' ') {
+         delay(beats[i] * tempo); // rest
+       } else {
+         for (int j=4; j<8;j++){
+          digitalWrite(j,LOW);
+         }
+         playNote(notes[i], beats[i] * tempo);
+       }
+       digitalWrite(7, HIGH);
+       digitalWrite(4,HIGH);
+       digitalWrite(6,HIGH);
+       digitalWrite(5,HIGH);
+       // pause between notes
+       delay(tempo/2);
+      }
+    myServo.write(45);
+    delay(250);
+    myServo.write(45);
+    }
+}
+  //Has the switch changed its state
+  //read the value of the switch
+  switchState = digitalRead(switchPin);
+  
+  //Check to see if the previous switch is in a different position
+  //than it was previously
+  //Resets the variable to their defaults if necessary
+  if(switchState != prevSwitchState){
+    for(int x=4; x<8; x++){
+      digitalWrite(x, LOW);
+    }
+    led = 4;
+    previousTime = currentTime;
+  }
+  
+  //Set the current state to the previous state
+  prevSwitchState = switchState;   
+
+}
